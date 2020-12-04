@@ -1,9 +1,41 @@
 public class WordNet {
 
+    private final Map<String, Set<Integer>> dict; // map of the format 'word : list of ids of synsets containing word'
+    private final Digraph G; // digragh charting hypernyms - vertex number = synset id
+
     // constructor takes the name of two CSV input files
     // (see full spec for required file format)
     public WordNet(String synsets, String hypernyms) {
+        dict = createSynsetDict(synsets);
     }
+
+    private Map<String, Set<Integer>> createSynsetDict(String synsets) {
+        In in = new In(synsets);
+        Map<String, Set<Integer>> synMap = new HashMap<String, Set<Integer>>();
+        while (!in.isEmpty()) {
+            String line = in.readLine();
+            String[] tokens = line.split(",");
+            
+            Integer id = new Integer(tokens[0]);
+            String synset = tokens[1];
+            for (String word : synset.split(" ")) {
+                addToDict(synMap, word, id)
+            }
+        }
+        return synMap;
+    }
+
+    // adds word to dict (synMap), if it's not already present, then adds id to idSet,
+    // creating a new set (a HashSet<Integer>) if necessary
+    private void addToDict(Map<String, Set<Integer>> synMap, String word, Integer id) {
+        if (!synMap.contains(word)) {
+            synMap.put(word, new HashSet<Integer>());
+        }
+
+        Set<Integer> idSet = synMap.get(word);
+        idSet.add(id);
+    }
+            
 
     // returns all WordNet nouns
     public Iterable<String> nouns() {
@@ -24,5 +56,7 @@ public class WordNet {
     }
 
     // unit testing
+    public static void main(String[] args) {
+        WordNet wn = new WordNet(args[0], args[1]);
 
 }
