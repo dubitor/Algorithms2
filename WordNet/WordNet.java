@@ -9,16 +9,21 @@ import java.util.List;
 import edu.princeton.cs.algs4.Digraph;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdOut;
+import edu.princeton.cs.algs4.Topological;
 
 public class WordNet {
 
     private final Map<String, Set<Integer>> dict; // map of the format 'word : list of ids of synsets containing word'
     private final List<String> synsetList; // stores all the synsets, indexed by id
     private final Digraph G; // digragh charting hypernyms - vertex number = synset id
+    private final SAP sap;
 
     // constructor takes the name of two CSV input files
     // (see full spec for required file format)
     public WordNet(String synsets, String hypernyms) {
+        if (synsets == null || hypernyms == null) {
+            throw new IllegalArgumentException("two string arguments required");
+        }
 
         dict = new HashMap<String, Set<Integer>>();
         synsetList = new ArrayList<String>();
@@ -26,6 +31,14 @@ public class WordNet {
         
         G = new Digraph(numOfSynsets());
         storeHypernyms(hypernyms);
+        if (!isDAG()) {
+            throw new IllegalArgumentException("graph is not a DAG");
+        }
+        if (!isSinglyRooted()) {
+            throw new IllegalArgumentException("graph is not singly rooted");
+        }
+
+        sap = new SAP(G);
     }
 
     // initialises synset related variables
@@ -92,6 +105,25 @@ public class WordNet {
         }
     }
 
+    private boolean isSinglyRooted() {
+        int roots = 0;
+        for (int v = 0; v < numOfSynsets(); v++) {
+           if (G.outdegree(v) == 0 && G.indegree(v) > 0) {
+               roots++;
+            }
+        }
+        return roots == 1;
+    }
+
+
+    private boolean isDAG() {
+        Topological t = new Topological(G);
+        if (!t.hasOrder()) {
+            return false;
+        }
+        return true;
+    }
+
     // returns all WordNet nouns
     public Iterable<String> nouns() {
         Queue<String> q = new ArrayDeque<String>(numOfWords());
@@ -103,24 +135,37 @@ public class WordNet {
 
     // is the word a WordNet noun?
     public boolean isNoun(String word) {
+        if (word == null) {
+            throw new IllegalArgumentException("string argument required");
+        }
         return dict.containsKey(word);
     }
 
-    /*// distance between nounA and nounB
+    // distance between nounA and nounB
     public int distance(String nounA, String nounB) {
+        if (nounA == null || nounB == null) {
+            throw new IllegalArgumentException("two string arguments required");
+        }
+        if (!(isNoun(nounA) && isNoun(nounB))) {
+            throw new IllegalArgumentException("arguments must be in WordNet");
+        }
+        return sap.length(dict.get(nounA), dict.get(nounB));
     }
 
     // a synset (second field of synsets.txt) that is the 
     // common ancestor of nounA and nounB in a shortest
     // ancestral path (see spec)
     public String sap(String nounA, String nounB) {
+        if (nounA == null || nounB == null) {
+            throw new IllegalArgumentException("two string arguments required");
+        }
+        if (!(isNoun(nounA) && isNoun(nounB))) {
+            throw new IllegalArgumentException("arguments must be in WordNet");
+        }
+        int ancestor = sap.ancestor(dict.get(nounA), dict.get(nounB));
+        return synsetList.get(ancestor);
     }
-    */
-
-    // prints to stdout
-    // for testing
-    private void print() {
-    }
+    
 
     // unit testing
     public static void main(String[] args) {
