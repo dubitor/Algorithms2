@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Queue;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.List;
 import edu.princeton.cs.algs4.Digraph;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdOut;
@@ -12,22 +13,23 @@ import edu.princeton.cs.algs4.StdOut;
 public class WordNet {
 
     private final Map<String, Set<Integer>> dict; // map of the format 'word : list of ids of synsets containing word'
-    private final List<String[]> synsetList; // stores all the synsets, indexed by id
+    private final List<String> synsetList; // stores all the synsets, indexed by id
     private final Digraph G; // digragh charting hypernyms - vertex number = synset id
-    private final int numOfWords;
-    private final int numOfSynsets;
 
     // constructor takes the name of two CSV input files
     // (see full spec for required file format)
     public WordNet(String synsets, String hypernyms) {
+
+        dict = new HashMap<String, Set<Integer>>();
+        synsetList = new ArrayList<String>();
         storeSynsets(synsets);
-        createGraph(hypernyms);
+        
+        G = new Digraph(numOfSynsets());
+        storeHypernyms(hypernyms);
     }
 
     // initialises synset related variables
     private void storeSynsets(String synsets) {
-        dict = new HashMap<String, Set<Integer>>();
-        synsetList = new ArrayList<String[]>();
         In in = new In(synsets);
         while (!in.isEmpty()) {
             String[] tokens = parseLine(in);
@@ -40,18 +42,16 @@ public class WordNet {
                 addToDict(word, id);
             }
         }
-        numOfWords = dict.size();
-        numOfSynsets = synsetList.size();
     }
 
-    // adds word to dict (synMap), if it's not already present, then adds id to idSet,
+    // adds word to dict, if it's not already present, then adds id to idSet,
     // creating a new set (a HashSet<Integer>) if necessary
     private void addToDict(String word, Integer id) {
         if (!dict.containsKey(word)) {
             dict.put(word, new HashSet<Integer>());
         }
 
-        Set<Integer> idSet = synMap.get(word);
+        Set<Integer> idSet = dict.get(word);
         idSet.add(id);
     }
 
@@ -62,10 +62,16 @@ public class WordNet {
         return line.split(",");
     }
 
-    private storeHypernyms(String hypernyms) {
+    private int numOfWords() {
+        return dict.size();
+    }
+
+    private int numOfSynsets() {
+        return synsetList.size();
+    }
+
+    private void storeHypernyms(String hypernyms) {
         In in = new In(hypernyms);
-        assert (numOfSynsets != 0) // synsets list should be initialised first
-        G = new Digraph(numOfSynsets);
         while (!in.isEmpty()) {
             String[] tokens = parseLine(in);
             int len = tokens.length;
@@ -88,7 +94,7 @@ public class WordNet {
 
     // returns all WordNet nouns
     public Iterable<String> nouns() {
-        Queue<String> q = new ArrayDeque<String>(numOfWords);
+        Queue<String> q = new ArrayDeque<String>(numOfWords());
         for (String word : dict.keySet()) {
             q.add(word);
         }
