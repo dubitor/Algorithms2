@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Queue;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import edu.princeton.cs.algs4.Digraph;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdOut;
@@ -11,36 +12,43 @@ import edu.princeton.cs.algs4.StdOut;
 public class WordNet {
 
     private final Map<String, Set<Integer>> dict; // map of the format 'word : list of ids of synsets containing word'
+    private final List<String[]> synsetList; // stores all the synsets, indexed by id
     private final Digraph G; // digragh charting hypernyms - vertex number = synset id
     private final int numOfWords;
+    private final int numOfSynsets;
 
     // constructor takes the name of two CSV input files
     // (see full spec for required file format)
     public WordNet(String synsets, String hypernyms) {
-        dict = createSynsetDict(synsets);
-        numOfWords = dict.size();
-        G = createGraph(hypernyms);
+        storeSynsets(synsets);
+        createGraph(hypernyms);
     }
 
-    private Map<String, Set<Integer>> createSynsetDict(String synsets) {
+    // initialises synset related variables
+    private void storeSynsets(String synsets) {
+        dict = new HashMap<String, Set<Integer>>();
+        synsetList = new ArrayList<String[]>();
         In in = new In(synsets);
-        Map<String, Set<Integer>> synMap = new HashMap<String, Set<Integer>>();
         while (!in.isEmpty()) {
             String[] tokens = parseLine(in);
+
+            synsetList.add(tokens[1]);
+
             Integer id = new Integer(tokens[0]);
             String synset = tokens[1];
             for (String word : synset.split(" ")) {
-                addToDict(synMap, word, id);
+                addToDict(word, id);
             }
         }
-        return synMap;
+        numOfWords = dict.size();
+        numOfSynsets = synsetList.size();
     }
 
     // adds word to dict (synMap), if it's not already present, then adds id to idSet,
     // creating a new set (a HashSet<Integer>) if necessary
-    private void addToDict(Map<String, Set<Integer>> synMap, String word, Integer id) {
-        if (!synMap.containsKey(word)) {
-            synMap.put(word, new HashSet<Integer>());
+    private void addToDict(String word, Integer id) {
+        if (!dict.containsKey(word)) {
+            dict.put(word, new HashSet<Integer>());
         }
 
         Set<Integer> idSet = synMap.get(word);
@@ -54,26 +62,27 @@ public class WordNet {
         return line.split(",");
     }
 
-    private Digraph createGraph(String hypernyms) {
+    private storeHypernyms(String hypernyms) {
         In in = new In(hypernyms);
-        Digraph dg = new Digraph(numOfWords);
+        assert (numOfSynsets != 0) // synsets list should be initialised first
+        G = new Digraph(numOfSynsets);
         while (!in.isEmpty()) {
             String[] tokens = parseLine(in);
             int len = tokens.length;
             if (len > 1) {
-                addEdges(dg, tokens, len);
+                addEdges(tokens, len);
             }
         }
-        return dg;
     }
 
     // len = tokens.length
-    private void addEdges(Digraph dg, String[] tokens, int len) {
+    private void addEdges(String[] tokens, int len) {
         assert len > 1;
+        assert (G != null);
         int v = Integer.parseInt(tokens[0]);
         for (int i = 1; i < len; i++) {
             int w = Integer.parseInt(tokens[i]);
-            dg.addEdge(v, w);
+            G.addEdge(v, w);
         }
     }
 

@@ -13,6 +13,9 @@ public class SAP {
 
     // constructor takes a digraph (not necessarily a DAG)
     public SAP(Digraph G) {
+        if (G == null) {
+            throw new IllegalArgumentException("requires digraph argument");
+        }
         this.G = G;
     }
 
@@ -60,6 +63,9 @@ public class SAP {
     // length of shortest ancestral path between any vertex
     // in v and any vertex in w
     public int length(Iterable<Integer> v, Iterable<Integer> w) {
+        if (v == null || w == null) {
+            throw new IllegalArgumentException("requires two arguments");
+        }
 
         BreadthFirstDirectedPaths vbf = new BreadthFirstDirectedPaths(G, v);
         BreadthFirstDirectedPaths wbf = new BreadthFirstDirectedPaths(G, w);
@@ -71,6 +77,9 @@ public class SAP {
     // a common ancestor that participates in shortest
     // ancestral path; -1 if no such path
     public int ancestor(Iterable<Integer> v, Iterable<Integer> w) {
+        if (v == null || w == null) {
+            throw new IllegalArgumentException("requires two arguments");
+        }
 
         BreadthFirstDirectedPaths vbf = new BreadthFirstDirectedPaths(G, v);
         BreadthFirstDirectedPaths wbf = new BreadthFirstDirectedPaths(G, w);
