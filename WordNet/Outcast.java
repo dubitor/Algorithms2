@@ -13,7 +13,7 @@ public class Outcast {
         int maxDist = 0;
         for (int i = 0; i < nouns.length; i++) {
             int dist = 0;
-            for (String noun : wn.nouns()) {
+            for (String noun : nouns) {
                 dist += wn.distance(nouns[i], noun);
             }
             if (dist > maxDist) {

@@ -16,7 +16,7 @@ public class SAP {
         if (G == null) {
             throw new IllegalArgumentException("requires digraph argument");
         }
-        this.G = G;
+        this.G = new Digraph(G);
     }
 
     // length of shortest ancestral path between v and w
@@ -67,9 +67,14 @@ public class SAP {
             throw new IllegalArgumentException("requires two arguments");
         }
 
+        if (isEmpty(v) || isEmpty(w)) {
+            return -1;
+        }
+
         BreadthFirstDirectedPaths vbf = new BreadthFirstDirectedPaths(G, v);
         BreadthFirstDirectedPaths wbf = new BreadthFirstDirectedPaths(G, w);
-        
+
+
         return sap(vbf, wbf)[0];
 
     }
@@ -81,11 +86,23 @@ public class SAP {
             throw new IllegalArgumentException("requires two arguments");
         }
 
+        if (isEmpty(v) || isEmpty(w)) {
+            return -1;
+        }
+
         BreadthFirstDirectedPaths vbf = new BreadthFirstDirectedPaths(G, v);
         BreadthFirstDirectedPaths wbf = new BreadthFirstDirectedPaths(G, w);
         
         return sap(vbf, wbf)[1];
 
+    }
+
+    private boolean isEmpty(Iterable<Integer> x) {
+        int size = 0;
+        for (Integer i : x) {
+            size++;
+        }
+        return size == 0;
     }
 
     // unit testing
