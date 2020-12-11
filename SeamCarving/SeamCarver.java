@@ -6,6 +6,9 @@ public class SeamCarver {
 
     // create a seam carber object based on the given picture
     public SeamCarver(Picture picture) {
+        if (picture == null) {
+            throw new IllegalArgumentException("null argument");
+        }
         this.picture = new Picture(picture);
     }
 
@@ -26,10 +29,17 @@ public class SeamCarver {
 
     // energy of pixel at column x and row y
     public double energy(int x, int y) {
+        validateIndices(x, y);
         if (x == 0 || x == picture.width() - 1 || y == 0 || y == picture.height() - 1) {
             return 1000; // default value for edge pixels
         }
         return Math.sqrt(deltaXSquared(x, y) + deltaYSquared(x, y));
+    }
+
+    private void validateIndices(int col, int row) {
+        if (!(0 <= col && col < width() && 0 <= row && row <= height())) {
+            throw new IllegalArgumentException("argument(s) out of range");
+        }
     }
 
     // square of horizontal energy gradient
@@ -50,7 +60,7 @@ public class SeamCarver {
     private int colourGradSquared(Color a, Color b) {
         int redDiff = a.getRed() - b.getRed();
         int greenDiff = a.getGreen() - b.getGreen();
-        int blueDiff = a.getBlue() - b. getBlue();
+        int blueDiff = a.getBlue() - b.getBlue();
         return redDiff * redDiff + greenDiff * greenDiff + blueDiff * blueDiff;
     }
 
@@ -87,13 +97,13 @@ public class SeamCarver {
         }
 
         double[][] pathEnergy =  new double[width()][height()];
+        for (int row = 0; row < height(); row++) {
+            for (int col = 0; col < width(); col++) {
+                pathEnergy[col][row] = Integer.MAX_VALUE; // initialise to infitity for other pixels
+            }
+        }
         for (int col = 0; col < width(); col++) {
             pathEnergy[col][0] = 1000; // initialise path energy of every first row pixel to 1000
-        }
-        for (int row = 1; row < height(); row++) {
-            for (int col = 0; col < width(); col++) {
-                pathEnergy[col][row] = Integer.MAX_VALUE; // initialise to infitity for all other pixels
-            }
         }
 
         int[][] prevPixel =  new int[width()][height()]; // col index of previous pixel
@@ -115,7 +125,7 @@ public class SeamCarver {
             seam[currentRow] = currentCol;
             currentCol = prevPixel[currentCol][currentRow--];
         }
-        assert(seam[1] != 0); // check the array is actually filled: [0][1] == 1000 so shouldn't ever be in the seam
+        assert (seam[1] != 0); // check the array is actually filled: [0][1] == 1000 so shouldn't ever be in the seam
         return seam;
 
     }
@@ -124,7 +134,7 @@ public class SeamCarver {
     private int findLastInPath(double[][] pathEnergy) {
         int champion = 0, lastRow = height() - 1;
         for (int col = 0; col < width(); col++) {
-            assert(pathEnergy[col][lastRow] != Integer.MAX_VALUE); // pathEnergy must be already filled
+            assert (pathEnergy[col][lastRow] != Integer.MAX_VALUE); // pathEnergy must be already filled
             if (pathEnergy[col][lastRow] < pathEnergy[champion][lastRow]) {
                 champion = col;
             }
@@ -134,7 +144,7 @@ public class SeamCarver {
 
     // column of vertex with minimum path energy out of the possible predecessors
     private int findMinPredecessor(int col, int row, double[][] pathEnergy) {
-        assert(row != 0); // shouldn't be called for first row
+        assert (row != 0); // shouldn't be called for first row
         if (col == 0) {
             return col + 1; // min pred will never be in end column
         }
@@ -161,7 +171,6 @@ public class SeamCarver {
 
     // remove horizontal seam from current picture
     public void removeHorizontalSeam(int[] seam) {
-        Picture copy = new Picture(picture);
         rotatePicture90Deg();
         removeVerticalSeam(seam);
         rotatePicture90Deg();
@@ -172,11 +181,14 @@ public class SeamCarver {
         
         Picture newPict = new Picture(width() - 1, height());
         for (int row = 0; row < newPict.height(); row++) {
+            int offset = 0;
             for (int col = 0; col < newPict.width(); col++) {
-                if (col != seam[row]) {
-                    newPict.set(col, row, picture.get(col, row));
+                if (col == seam[row]) {
+                    offset = 1;
                 }
+                newPict.set(col, row, picture.get(col + offset, row));
             }
+            offset = 0;
         }
         picture = newPict;
     }
