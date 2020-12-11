@@ -56,8 +56,24 @@ public class SeamCarver {
 
     // sequence of indices for horizontal seam
     public int[] findHorizontalSeam() {
-        return new int[0];
+        Picture copy = new Picture(picture);
+        rotatePicture90Deg();
+        int[] seam = findVerticalSeam();
+        picture = copy;
+        return seam;
+
     }
+
+    private void rotatePicture90Deg() {
+        Picture rotatedPict = new Picture(height(), width());
+        for (int col = 0; col < rotatedPict.width(); col++) {
+            for (int row = 0; row < rotatedPict.height(); row++) {
+                rotatedPict.set(col, row, picture.get(row, col));
+            }
+        }
+        picture = rotatedPict;
+    }
+
 
     // sequence of indices for vertical seam
     public int[] findVerticalSeam() {
@@ -145,10 +161,24 @@ public class SeamCarver {
 
     // remove horizontal seam from current picture
     public void removeHorizontalSeam(int[] seam) {
+        Picture copy = new Picture(picture);
+        rotatePicture90Deg();
+        removeVerticalSeam(seam);
+        rotatePicture90Deg();
     }
 
     // remove vertical seam from current picture
     public void removeVerticalSeam(int[] seam) {
+        
+        Picture newPict = new Picture(width() - 1, height());
+        for (int row = 0; row < newPict.height(); row++) {
+            for (int col = 0; col < newPict.width(); col++) {
+                if (col != seam[row]) {
+                    newPict.set(col, row, picture.get(col, row));
+                }
+            }
+        }
+        picture = newPict;
     }
 
     // unit testing
