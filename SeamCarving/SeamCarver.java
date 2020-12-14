@@ -29,18 +29,26 @@ public class SeamCarver {
 
     // energy of pixel at column x and row y
     public double energy(int x, int y) {
-        validateIndices(x, y);
+        validateColumn(x);
+        validateRow(y);
         if (x == 0 || x == picture.width() - 1 || y == 0 || y == picture.height() - 1) {
             return 1000; // default value for edge pixels
         }
         return Math.sqrt(deltaXSquared(x, y) + deltaYSquared(x, y));
     }
 
-    private void validateIndices(int col, int row) {
-        if (!(0 <= col && col < width() && 0 <= row && row <= height())) {
-            throw new IllegalArgumentException("argument(s) out of range");
+    private void validateColumn(int col) {
+        if (!(0 <= col && col < width())) {
+            throw new IllegalArgumentException("invalid column");
         }
     }
+
+    private void validateRow(int row) {
+        if (!(0 <= row && row < height())) {
+            throw new IllegalArgumentException("invalid row");
+        }
+    }
+
 
     // square of horizontal energy gradient
     private int deltaXSquared(int col, int row) {
@@ -88,6 +96,15 @@ public class SeamCarver {
     // sequence of indices for vertical seam
     public int[] findVerticalSeam() {
 
+        int[] seam = new int[height()]; 
+
+        if (width() == 1) { // corner case
+            for (int i = 0; i < seam.length; i++) {
+                seam[i] = 0;
+            }
+        } 
+
+
         // initialise pixel-energy model of the picture
         double[][] pixelEnergy = new double[width()][height()];
         for (int col = 0; col < width(); col++) {
@@ -119,7 +136,6 @@ public class SeamCarver {
             }
         }
 
-        int[] seam = new int[height()]; // col indices
         int currentRow = height() - 1, currentCol = findLastInPath(pathEnergy);
         while (currentRow >= 0) {
             seam[currentRow] = currentCol;
@@ -171,6 +187,7 @@ public class SeamCarver {
 
     // remove horizontal seam from current picture
     public void removeHorizontalSeam(int[] seam) {
+
         rotatePicture90Deg();
         removeVerticalSeam(seam);
         rotatePicture90Deg();
@@ -178,6 +195,7 @@ public class SeamCarver {
 
     // remove vertical seam from current picture
     public void removeVerticalSeam(int[] seam) {
+        validateVerticalSeamRemoval(seam);
         
         Picture newPict = new Picture(width() - 1, height());
         for (int row = 0; row < newPict.height(); row++) {
@@ -193,6 +211,26 @@ public class SeamCarver {
         picture = newPict;
     }
 
-    // unit testing
+    private void validateVerticalSeamRemoval(int[] seam) {
+        if (width() <= 1) {
+            throw new IllegalArgumentException("picture too small to remove seam");
+        }
+        if (seam == null) {
+            throw new IllegalArgumentException("null argument");
+        }
+        if (seam.length != height()) {
+            throw new IllegalArgumentException("argument wrong size");
+        }
+        validateColumn(seam[0]);
+        for (int i = 0; i < seam.length - 1; i++) {
+            validateColumn(seam[i + 1]);
+            if (Math.abs(seam[i] - seam[i + 1]) > 1) {
+                throw new IllegalArgumentException("invalid seam");
+            }
+        }
+    }
+
+
+    // unit testing in auxillary files
 
 }
