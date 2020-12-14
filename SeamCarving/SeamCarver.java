@@ -75,14 +75,14 @@ public class SeamCarver {
     // sequence of indices for horizontal seam
     public int[] findHorizontalSeam() {
         Picture copy = new Picture(picture);
-        rotatePicture90Deg();
+        transposePicture();
         int[] seam = findVerticalSeam();
         picture = copy;
         return seam;
 
     }
 
-    private void rotatePicture90Deg() {
+    private void transposePicture() {
         Picture rotatedPict = new Picture(height(), width());
         for (int col = 0; col < rotatedPict.width(); col++) {
             for (int row = 0; row < rotatedPict.height(); row++) {
@@ -102,16 +102,14 @@ public class SeamCarver {
             for (int i = 0; i < seam.length; i++) {
                 seam[i] = 0;
             }
+            return seam;
         } 
 
-
-        // initialise pixel-energy model of the picture
-        double[][] pixelEnergy = new double[width()][height()];
-        for (int col = 0; col < width(); col++) {
-            for (int row = 0; row < height(); row++) {
-                pixelEnergy[col][row] = energy(col, row);
-            }
+        if (height() == 1) { // corner case
+            seam[0] = 0;
+            return seam;
         }
+
 
         double[][] pathEnergy =  new double[width()][height()];
         for (int row = 0; row < height(); row++) {
@@ -129,10 +127,8 @@ public class SeamCarver {
             for (int col = 0; col < width(); col++) {
                 int prev = findMinPredecessor(col, row, pathEnergy);
                 double minPrevEnergy = pathEnergy[prev][row - 1];
-                if (pixelEnergy[col][row] + minPrevEnergy < pathEnergy[col][row]) { // we've found a (better) way of getting there
-                    pathEnergy[col][row] = pixelEnergy[col][row] + minPrevEnergy;
-                    prevPixel[col][row] = prev;
-                }
+                pathEnergy[col][row] = energy(col)(row) + minPrevEnergy;
+                prevPixel[col][row] = prev;
             }
         }
 
@@ -188,9 +184,9 @@ public class SeamCarver {
     // remove horizontal seam from current picture
     public void removeHorizontalSeam(int[] seam) {
 
-        rotatePicture90Deg();
+        transposePicture();
         removeVerticalSeam(seam);
-        rotatePicture90Deg();
+        transposePicture();
     }
 
     // remove vertical seam from current picture
