@@ -4,6 +4,7 @@ import edu.princeton.cs.algs4.FlowNetwork;
 import edu.princeton.cs.algs4.FlowEdge;
 import edu.princeton.cs.algs4.FordFulkerson;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.HashMap;
 import java.util.ArrayList;
 
@@ -13,8 +14,9 @@ public class BaseballElimination {
     private final int v; // number of vertices in the flow network
     private final Map<String, int[]> teams; // int[] format: { id, wins, losses, rem }
     private final String[] teamNames; // team names indexed by team id
+    private final Map<String, ArrayList<String>> certificates; // team : certificate of elimination
     private final int[][] toPlay; // toPlay[i][j] = num of games remaining between i & j
-    private final int INFINITY = Integer.MAX_VALUE;
+    private final double INFINITY = Double.POSITIVE_INFINITY;
     // consider Map<String, int> team name: team id -- not bidirectional
     // and int[] wins, losses, rem
 
@@ -25,6 +27,7 @@ public class BaseballElimination {
         nChoose2 = n * (n - 1) / 2;
         v = nChoose2 + n + 2;
         teams = new HashMap<String, int[]>(n);
+        certificates = new TreeMap<String, ArrayList<String>>();
         toPlay = new int[n][n];
         teamNames = new String[n];
 
@@ -76,11 +79,36 @@ public class BaseballElimination {
     }
         
 	public boolean isEliminated(String team) {              // is given team eliminated?
-        return true;
+        return (certificateOfElimination(team) != null);
     }
 
 	public Iterable<String> certificateOfElimination(String team) {  // subset R of teams that eliminates given team; null if not eliminated
-        return new ArrayList<String>();
+
+        if (certificates.containsKey(team)) {
+            return certificates.get(team);
+        }
+
+        certificates.put(team, null); // assume not eliminated
+
+        ArrayList<String> cert = new ArrayList<String>();
+        // check trivial elimination
+        int maxPossWins = wins(team) + remaining(team);
+        for (String name : teamNames) {
+            if (wins(name) > maxPossWins) {
+                cert.add(name);
+            }
+        }
+        if (cert.size() > 0) {
+            certificates.put(team, cert);
+            return cert;
+        }
+
+        // check non-trivial elimination
+        FlowNetwork fn = createFlowNetwork(team);
+        elimination(team, fn);
+        
+        return certificates.get(team);
+
     }
 
     private void checkTeam(String team) {
@@ -94,7 +122,7 @@ public class BaseballElimination {
         return arr[0];
     }
 
-    private void elimination(String team) {
+    private FlowNetwork createFlowNetwork(String team) {
 
         int teamId = getId(team);
         int source = 0, target = nChoose2 + n + 1;
@@ -119,11 +147,12 @@ public class BaseballElimination {
                 edge = new FlowEdge(currentVertex, teamVertex(otherId), INFINITY);
                 fn.addEdge(edge);
             }
+
         }
 
 
         // add team-t edges
-        int maxPossWins = wins(teamId) + rem(teamId);
+        int maxPossWins = wins(team) + remaining(team);
         for (int id = 0; id < n; id++) {
             if (id == teamId) {
                 continue;
@@ -132,7 +161,7 @@ public class BaseballElimination {
             fn.addEdge(edge);
         }
 
-        StdOut.print(fn.toString()); // testing
+        return fn;
     }
 
 
@@ -153,6 +182,28 @@ public class BaseballElimination {
         return v;
     }
 
+    // adds to certificates team : certificate if eliminated
+    private void elimination(String team, FlowNetwork fn) {
+        FordFulkerson ff = new FordFulkerson(fn, 0, nChoose2 + n + 1);
+        for (FlowEdge e : fn.adj(0)) {
+            if (e.flow() != e.capacity()) { // it's been eliminated
+
+                ArrayList<String> cert = new ArrayList<String>();
+                for (String name : teamNames) {
+                    int vertex = teamVertex(getId(name));
+                    if (ff.inCut(vertex)) {
+                        cert.add(name);
+                    }
+                }
+                certificates.put(team, cert);
+                return;
+            }
+        }
+    }
+
+
+
+
     // vertex number corresponding to team id
     private int teamVertex(int id) {
         return nChoose2 + 1 + id;
@@ -169,11 +220,6 @@ public class BaseballElimination {
 
 
     public static void main(String[] args) {
-        BaseballElimination b = new BaseballElimination(args[0]);
-        b.elimination("Detroit");
-    }
-
-    /* public static void main(String[] args) {
         BaseballElimination division = new BaseballElimination(args[0]);
         for (String team : division.teams()) {
             if (division.isEliminated(team)) {
@@ -188,6 +234,5 @@ public class BaseballElimination {
             }
         }
     }
-    */
 
 }
