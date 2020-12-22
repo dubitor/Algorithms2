@@ -14,7 +14,7 @@ public class BaseballElimination {
     private final Map<String, int[]> teams; // int[] format: { id, wins, losses, rem }
     private final String[] teamNames; // team names indexed by team id
     private final int[][] toPlay; // toPlay[i][j] = num of games remaining between i & j
-    private final double INFINITY = Double.MAX_VALUE;
+    private final int INFINITY = Integer.MAX_VALUE;
     // consider Map<String, int> team name: team id -- not bidirectional
     // and int[] wins, losses, rem
 
@@ -96,42 +96,68 @@ public class BaseballElimination {
 
     private void elimination(String team) {
 
-        int id = getId(team);
+        int teamId = getId(team);
         int source = 0, target = nChoose2 + n + 1;
         int firstGameVertex = 1, firstTeamVertex = nChoose2 + 1;
 
         FlowNetwork fn = new FlowNetwork(v);
 
-        // add edges to and from game vertices
-        for (int i = 0; i < n; i++) {
-            if (i == id) {
+        for (int id = 0; id < teamNames.length; id++) {
+            String currentTeam = teamNames[id];
+            if (currentTeam.equals(team)) {
                 continue;
             }
-            for (int j = i + 1; j < n; j++) {
-                if (j == id) {
+            for (int otherId = id + 1; otherId < n; otherId++) {
+                if (otherId == teamId) {
                     continue;
                 }
-                FlowEdge edge = new FlowEdge(source, firstGameVertex + i + j, toPlay[i][j]);
+                int currentVertex = gameVertex(id, otherId);
+                FlowEdge edge = new FlowEdge(source, currentVertex, toPlay[id][otherId]);
+                fn.addEdge(edge);
+                edge = new FlowEdge(currentVertex, teamVertex(id), INFINITY);
+                fn.addEdge(edge);
+                edge = new FlowEdge(currentVertex, teamVertex(otherId), INFINITY);
                 fn.addEdge(edge);
             }
+        }
 
-            FlowEdge edge = new FlowEdge(firstGameVertex + i, firstTeamVertex + i, INFINITY);
-            fn.addEdge(edge);
-        } 
-        
 
         // add team-t edges
-        int maxPossWins = wins(id) + rem(id);
-        for (int i = 0; i < n; i++) {
-            if (i == id) {
+        int maxPossWins = wins(teamId) + rem(teamId);
+        for (int id = 0; id < n; id++) {
+            if (id == teamId) {
                 continue;
             }
-            FlowEdge edge = new FlowEdge(firstTeamVertex + i, target, maxPossWins - wins(i));
+            FlowEdge edge = new FlowEdge(teamVertex(id), target, maxPossWins - wins(id));
             fn.addEdge(edge);
         }
 
         StdOut.print(fn.toString()); // testing
     }
+
+
+    // the vertex number representing a game between two teams
+    private int gameVertex(int id, int otherId) {
+        int v = nChoose2; // set v to the last game vertex
+        int x = 1;
+        while (id < n - 2) { // set v to the last vertex that refers to an id game
+            id++;
+            v -= x;
+            x++;
+        }
+        int y = n - 1;
+        while (y > otherId) { // decrement v until reach id-otherId game
+            v--;
+            y--;
+        }
+        return v;
+    }
+
+    // vertex number corresponding to team id
+    private int teamVertex(int id) {
+        return nChoose2 + 1 + id;
+    }
+        
 
     private int wins(int teamId) {
         return wins(teamNames[teamId]);
