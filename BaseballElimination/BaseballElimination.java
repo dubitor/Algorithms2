@@ -1,15 +1,18 @@
-import edu.princeton.cs.StdOut;
-import edu.princeton.cs.In;
-import edu.princeton.cs.FlowNetwork;
-import edu.princeton.cs.FlowEdge;
-import edu.princeton.cs.FordFulkerson;
+import edu.princeton.cs.algs4.StdOut;
+import edu.princeton.cs.algs4.In;
+import edu.princeton.cs.algs4.FlowNetwork;
+import edu.princeton.cs.algs4.FlowEdge;
+import edu.princeton.cs.algs4.FordFulkerson;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.ArrayList;
 
 public class BaseballElimination {
     private final int n; // number of teams
+    private final int nChoose2;
     private final int v; // number of vertices in the flow network
     private final Map<String, int[]> teams; // int[] format: { id, wins, losses, rem }
+    private final String[] teamNames; // team names indexed by team id
     private final int[][] toPlay; // toPlay[i][j] = num of games remaining between i & j
     private final int INFINITY = Integer.MAX_VALUE;
     // consider Map<String, int> team name: team id -- not bidirectional
@@ -19,16 +22,19 @@ public class BaseballElimination {
 
         In in = new In(filename);
         n = in.readInt();
-        v = numOfVertices(n);
+        nChoose2 = n * (n - 1) / 2;
+        v = nChoose2 + n + 2;
         teams = new HashMap<String, int[]>(n);
         toPlay = new int[n][n];
+        teamNames = new String[n];
 
         for (int i = 0; i < n; i++) {
 
             String name = in.readString();
+            teamNames[i] = name;
             int[] arr = new int[4];
             arr[0] = i;
-            for (int j = 1; j < arr.length(); j++) {
+            for (int j = 1; j < arr.length; j++) {
                 arr[j] = in.readInt();
             }
             teams.put(name, arr);
@@ -42,11 +48,6 @@ public class BaseballElimination {
                 }
             }
         }
-    }
-
-    private int numOfVertices(int n) {
-        int nChoose2 = n * (n - 1) / 2; // num of game vertices
-        return nChoose2 + n + 2;
     }
 
 
@@ -76,12 +77,16 @@ public class BaseballElimination {
 	public int against(String team1, String team2) {    // number of remaining games between team1 and team2
         checkTeam(team1);
         checkTeam(team2);
-        return toPlay[getId(team1), getId(team2);
+        return toPlay[getId(team1)][getId(team2)];
     }
         
-	public boolean isEliminated(String team)              // is given team eliminated?
+	public boolean isEliminated(String team) {              // is given team eliminated?
+        return true;
+    }
 
-	public Iterable<String> certificateOfElimination(String team)  // subset R of teams that eliminates given team; null if not eliminated
+	public Iterable<String> certificateOfElimination(String team) {  // subset R of teams that eliminates given team; null if not eliminated
+        return new ArrayList<String>();
+    }
 
     private void checkTeam(String team) {
         if (!teams.containsKey(team)) {
@@ -89,7 +94,7 @@ public class BaseballElimination {
         }
     }
 
-    private void getId(String team) {
+    private int getId(String team) {
         int[] arr = teams.get(team);
         return arr[0];
     }
@@ -97,7 +102,7 @@ public class BaseballElimination {
     private void elimination(String team) {
 
         int id = getId(team);
-        int source = 0; target = v - 1;
+        int source = 0, target = v - 1;
 
         FlowNetwork fn = new FlowNetwork(v);
 
@@ -132,10 +137,25 @@ public class BaseballElimination {
         }
 
         // add team-t edges
-        assert currentVertex = v - 1;
-        currentVertex = currentVertex - (n - 1) // go back to first team vertex
-        for (int i = 0; i < n - 2; i++) {
-            FlowEdge edge = new FlowEdge(--currentVertex, target
+        int maxPossWins = wins(id) + rem(id);
+        assert currentVertex == v - 1;
+        currentVertex = nChoose2 + 1; // go back to first team vertex
+        for (int i = 0; i < n; i++) {
+            if (i == id) {
+                continue;
+            }
+            FlowEdge edge = new FlowEdge(currentVertex + i, target, maxPossWins - wins(i));
+            fn.addEdge(edge);
+        }
+    }
+
+    private int wins(int teamId) {
+        return wins(teamNames[teamId]);
+    }
+
+    private int rem(int teamId) {
+        return remaining(teamNames[teamId]);
+    }
 
 
     public static void main(String[] args) {
