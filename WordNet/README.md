@@ -1,4 +1,4 @@
-###WordNet
+### WordNet
 
 Implementation of <a href="https://wordnet.princeton.edu/">WordNet</a>, measuring the semantic relatedness of nouns.
 

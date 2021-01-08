@@ -1,4 +1,4 @@
-###SeamCarver
+### SeamCarver
 
 Implementation of <a href="https://www.youtube.com/watch?v=6NcIJXTlugc">seam carving</a>, a content-aware image resizing technique.
 
