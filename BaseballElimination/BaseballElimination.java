@@ -25,7 +25,7 @@ public class BaseballElimination {
         In in = new In(filename);
         n = in.readInt();
         nChoose2 = n * (n - 1) / 2;
-        v = nChoose2 + n + 2;
+        v = nChoose2 + n + 2; // each game + each team + source and sink
         teams = new HashMap<String, int[]>(n);
         certificates = new TreeMap<String, ArrayList<String>>();
         toPlay = new int[n][n];
@@ -79,6 +79,7 @@ public class BaseballElimination {
     }
         
 	public boolean isEliminated(String team) {              // is given team eliminated?
+        checkTeam(team);
         return (certificateOfElimination(team) != null);
     }
 
@@ -91,6 +92,7 @@ public class BaseballElimination {
         certificates.put(team, null); // assume not eliminated
 
         ArrayList<String> cert = new ArrayList<String>();
+
         // check trivial elimination
         int maxPossWins = wins(team) + remaining(team);
         for (String name : teamNames) {
@@ -104,10 +106,12 @@ public class BaseballElimination {
         }
 
         // check non-trivial elimination
-        FlowNetwork fn = createFlowNetwork(team);
-        elimination(team, fn);
-        
-        return certificates.get(team);
+        else {
+            FlowNetwork fn = createFlowNetwork(team);
+            elimination(team, fn);
+            
+            return certificates.get(team);
+        }
 
     }
 
