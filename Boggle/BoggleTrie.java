@@ -3,7 +3,7 @@ import java.util.Scanner;
  *  to be used in a boggle-playing programme
  */
 public class BoggleTrie {
-    private static final int R = 256; // extended ASCII
+    private static final int R = 26; // extended ASCII
     private Node root; // root of trie
 
     private class Node {
@@ -33,7 +33,7 @@ public class BoggleTrie {
             return x;
         }
         char c = key.charAt(d);
-        return get(x.next[c], key, d + 1);
+        return get(x.next[c - 65], key, d + 1);
     }
 
     // Are there any words in the dictionary that begin with 
@@ -62,7 +62,7 @@ public class BoggleTrie {
         }
         else {
             char c = key.charAt(d);
-            x.next[c] = add(x.next[c], key, d + 1);
+            x.next[c - 65] = add(x.next[c - 65], key, d + 1);
         }
         return x;
     }
