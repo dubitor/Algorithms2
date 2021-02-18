@@ -33,14 +33,14 @@ public class CircularSuffixArray {
     }
 
     private class CircularSuffix implements Comparable<CircularSuffix> {
-        private int offset;
+        private final int offset;
 
         public CircularSuffix(int offset) {
             this.offset = offset;
         }
         
         private char charAt(int i) {
-            return s.charAt(i + offset);
+            return s.charAt((i + offset) % length());
         }
 
         public int compareTo(CircularSuffix that) {
@@ -59,7 +59,7 @@ public class CircularSuffixArray {
 
     // unit testing
     public static void main(String[] args) {
-        String s = "circles";
+        String s = args[0];
         CircularSuffixArray csa = new CircularSuffixArray(s);
         System.out.println(s);
         char[] sChars = s.toCharArray();
